@@ -22,7 +22,7 @@ def insertSortedOrbtList(orbitList, dev):
     orbitList.append(dev)
             
         
-DEBUG = True
+DEBUG = False
 def runIoTSim():
     global DEBUG
     
@@ -58,6 +58,11 @@ def runIoTSim():
     
     devArrived = 0
     currServDev = None
+    
+    
+    for dev in IoTDevLst:
+        if dev.recertified:
+            print dev.recertified
     
     while nDevRecert < nDevToRecert:
         if DEBUG:
@@ -114,8 +119,8 @@ def runIoTSim():
                 
             else:
                 if newArr.orbitFirstStartTim == sys.maxint:
-                    newArr.orbitFirstStartTim = mstrClk + retransTim
-                    newArr.arrTimAfterOrbit = newArr.orbitFirstStartTim
+                    newArr.orbitFirstStartTim = mstrClk
+                    newArr.arrTimAfterOrbit = mstrClk + retransTim
                 else:
                     print 'logic error 3'
                     sys.exit()
@@ -146,6 +151,7 @@ def runIoTSim():
                     
                 orbtEvtLst.pop(0)
                 waitBuf.append(minObtEvt)
+                minObtEvt.orbitEndTim = mstrClk
                 
             else:
                 minObtEvt.arrTimAfterOrbit += retransTim
@@ -156,8 +162,23 @@ def runIoTSim():
             sys.exit()
             
     print mstrClk
-    print 'Running time ' + str(time.time() - startTime)            
-            
+    print 'Sim done, Total Running time =' + str(time.time() - startTime)            
+    
+    T = []
+    D = []
+    
+    for index in range(len(IoTDevLst)):
+        T.append(IoTDevLst[index].compltTim - IoTDevLst[index].firstArrTim)
+        if IoTDevLst[index].orbitFirstStartTim != sys.maxint and IoTDevLst[index].orbitEndTim != sys.maxint:
+            D.append(IoTDevLst[index].orbitEndTim - IoTDevLst[index].orbitFirstStartTim)
+    
+    print len(T), len(D)
+    
+    '''for dev in IoTDevLst:
+        if not dev.recertified:
+            print dev.recertified'''
+    
+    
 runIoTSim()
             
             

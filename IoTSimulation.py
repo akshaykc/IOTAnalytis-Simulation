@@ -1,6 +1,8 @@
 import sys
 import time 
 
+DEBUG1 = False
+DEBUG2 = True
 
 class IoTDev:
     def __init__(self, firstArrTim = sys.maxint, orbitFirstStartTim = sys.maxint,\
@@ -20,9 +22,7 @@ def insertSortedOrbtList(orbitList, dev):
             orbitList.insert(index, dev)
             return
     orbitList.append(dev)
-            
-        
-DEBUG = False
+
 def runIoTSim():
     global DEBUG
     
@@ -30,10 +30,20 @@ def runIoTSim():
     
     nDevToRecert = 1000
     
-    interArrTim = 6
-    servTim = 10
-    buffLenLimit = 2
-    retransTim = 5
+    if len(sys.argv) > 1:
+        interArrTim = float(sys.argv[1])
+        servTim = float(sys.argv[2])
+        retransTim = float(sys.argv[3])
+        buffLenLimit = float(sys.argv[4])
+    else:
+        '''interArrTim = 6
+        servTim = 10
+        retransTim = 5
+        buffLenLimit = 2'''
+        interArrTim = 17.98
+        servTim = 2
+        retransTim = 10
+        buffLenLimit = 10
     
     mstrClk = 0
     waitBuf = []
@@ -53,7 +63,7 @@ def runIoTSim():
     newArr = IoTDevLst[0]
     
     startTime = time.time()
-    if DEBUG:
+    if DEBUG1:
         print '\nMC\tCLA\tCLS\t#Queue\tCLR\n'
     
     devArrived = 0
@@ -65,7 +75,7 @@ def runIoTSim():
             print dev.recertified
     
     while nDevRecert < nDevToRecert:
-        if DEBUG:
+        if DEBUG1:
             if servCompl == sys.maxint:
                 print str(mstrClk) + '\t' + str(newArr.firstArrTim) + '\t' + '-' + '\t' + str(len(waitBuf)) \
                     + '\t' + str([elem.arrTimAfterOrbit for elem in orbtEvtLst])
@@ -90,22 +100,26 @@ def runIoTSim():
             minOrbitDeal = False
         
         if servCompl < newArr.firstArrTim and servComplLessMinOrb:
-                              
-                currServDev.compltTim = servCompl
-                if currServDev.recertified == True:
-                    print 'error 1'
-                    sys.exit()
-                else:
-                    currServDev.recertified = True
+                if currServDev:              
+                    currServDev.compltTim = servCompl
+                    if currServDev.recertified == True:
+                        print 'error 1'
+                        sys.exit()
+                    else:
+                        currServDev.recertified = True
+                
                 
                 mstrClk = servCompl
                 servCompl = mstrClk + servTim
                 
-                nDevRecert += 1
-                waitBuf.pop(0)
+                if currServDev:
+                    nDevRecert += 1
+                    waitBuf.pop(0)
                 
                 if waitBuf:
                     currServDev = waitBuf[0]
+                else:
+                    currServDev = None
                 
         elif newArr.firstArrTim <= servCompl and newArrLessMinOrb:
             mstrClk = newArr.firstArrTim
@@ -160,9 +174,13 @@ def runIoTSim():
         else:
             print 'logic error 5'
             sys.exit()
-            
-    print mstrClk
-    print 'Sim done, Total Running time =' + str(time.time() - startTime)            
+    
+    if DEBUG2:
+        print 'MAster clock at the end ' + str(mstrClk)
+    
+    computationTime = time.time() - startTime
+    if DEBUG2:
+        print 'Sim done, Total Running time = ' + str(computationTime)            
     
     T = []
     D = []
@@ -172,11 +190,13 @@ def runIoTSim():
         if IoTDevLst[index].orbitFirstStartTim != sys.maxint and IoTDevLst[index].orbitEndTim != sys.maxint:
             D.append(IoTDevLst[index].orbitEndTim - IoTDevLst[index].orbitFirstStartTim)
     
-    print len(T), len(D)
+    if DEBUG2:
+        print len(T), len(D), computationTime
     
-    '''for dev in IoTDevLst:
-        if not dev.recertified:
-            print dev.recertified'''
+    if DEBUG1:
+        for dev in IoTDevLst:
+            if not dev.recertified:
+                print dev.recertified
     
     
 runIoTSim()

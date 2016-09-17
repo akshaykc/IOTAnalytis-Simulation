@@ -1,7 +1,7 @@
 import sys
 import time
 import math
-import numpy
+import random
 
 DEBUG1 = False
 DEBUG2 = False
@@ -27,10 +27,10 @@ def get95thPercentile(paramList):
         
 def getMean(paramList):
     if paramList:
-        sum = 0
+        sumTemp = 0
         for elem in paramList:
-            sum += elem
-        return float(sum)/float(len(paramList))
+            sumTemp += elem
+        return float(sumTemp)/float(len(paramList))
     return 0
         
 def insertSortedOrbtList(orbitList, dev):
@@ -39,6 +39,10 @@ def insertSortedOrbtList(orbitList, dev):
             orbitList.insert(index, dev)
             return
     orbitList.append(dev)
+
+def nextArrPoisson(avgArrRate):
+    randomVal = random.random()
+    return -math.log(1 - randomVal) / avgArrRate
 
 def runIoTSim():
     global DEBUG1
@@ -73,20 +77,23 @@ def runIoTSim():
         retransTim = 5
         buffLenLimit = 2'''
         interArrTim = 17.98
-        servTim = 2
+        servTim =   14
         retransTim = 10
         buffLenLimit = 10
-        nIterations = 50
+        nIterations = 50   
         
-        
-        
-    for _ in range(nIterations):
+    for x in range(nIterations):
+        poissonArrTimes = []
         mstrClk = 0
         waitBuf = []
         orbtEvtLst = []
         IoTDevLst = []
         nDevRecert = 0
         servCompl = sys.maxint
+        
+        random.seed(x*7)
+        for _ in xrange(nDevToRecert):
+            poissonArrTimes.append(random.expovariate(1/interArrTim))
         
         '''First device'''
         dev = IoTDev(2.0)
@@ -182,7 +189,8 @@ def runIoTSim():
                     
                 devArrived += 1
                 if devArrived < nDevToRecert:
-                    IoTDevLst[devArrived].firstArrTim = mstrClk + interArrTim    
+                    #IoTDevLst[devArrived].firstArrTim = mstrClk + interArrTim
+                    IoTDevLst[devArrived].firstArrTim = mstrClk + poissonArrTimes[devArrived]
                     newArr = IoTDevLst[devArrived]
                 
                 if devArrived == nDevToRecert:
@@ -260,10 +268,8 @@ def runIoTSim():
     finalDMean = getMean(nDMeans)
     finalPMean = getMean(P)
     
-    print '95T','\t','95D','\t','95P','\t'
-    print finalT95Perc,'\t', finalD95Perc,'\t',  finalP95Perc,'\n'
-    print 'MeanT','\t','MeanD','\t','MeanP'
-    print finalTMean,'\t',  finalDMean,'\t',  finalPMean
+    print '95T = ',finalT95Perc, '\t\t','95D = ', finalD95Perc, '\t\t','95P = ', finalP95Perc
+    print 'MeanT = ',finalTMean,'\t\t','MeanD = ', finalDMean ,'\t\t','MeanP = ', finalPMean
     
 runIoTSim()
             
